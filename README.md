@@ -47,12 +47,3 @@ Project Reality
 Status: v1.0 Sealed. The tests are the contract.
 ---
 
-### Visual Proof
-
-**The Architecture (6-Step Ordering Rule)**
-![Authority Loop](docs/images/sequence_diagram.png)
-
-**The Evidence (Red-Team Success)**
-![Cargo Test Output](docs/images/test_output.png)
-
----
