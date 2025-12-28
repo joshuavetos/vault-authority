@@ -1,49 +1,50 @@
 Vault Authority v1.0
 Deterministic Remediation Gate
-Vault Authority is a high-integrity Rust library designed to sit between a fallible diagnostic layer and production environments. It replaces discretionary "script trust" with architectural ordering invariants, ensuring that automated actions are physically incapable of violating system safety.
-Repository Structure
-A minimal, audited footprint designed for zero-drift instantiation.
- * Cargo.toml: Specific dependency locks for tokio, serde, and ed25519-dalek.
- * src/lib.rs: Clean API surface for internal or external consumption.
- * src/vaultd.rs: The audited core enforcing the 6-step monotonic ordering rule.
- * src/actions.rs: A mockable execution boundary to isolate side effects.
- * tests/redteam.rs: An executable proof-by-abuse suite.
+Vault Authority is a high-integrity Rust library designed to sit between a diagnostic layer and production environments. It replaces discretionary "script trust" with architectural ordering invariants, ensuring that automated actions are physically incapable of violating system safety.
+Overview
+Vault Authority v1.0 is an audited core focused on one guarantee: The system never lies.
+ * Actionable: Accepts (trace_id, failure_id) for remediation.
+ * Fail-Closed: Emits a signed receipt only after successful execution.
+ * Atomic: If an action fails, no receipt exists and no state is mutated.
+ * Audited: Proves correctness via an adversarial red-team test suite.
+This is a library and test harness, not a daemon, HTTP service, or YAML engine.
 Core Invariants
-Safety is guaranteed by the physical order of instructions, enforcing a fail-closed state at all times:
- * INV-1 (Gating): Only failures explicitly defined in the FAILURE_TAXONOMY can proceed.
- * INV-2 (Atomic): Any execution failure results in zero state changes—no receipt is signed, and no dedupe key is written.
- * INV-4 (Dedupe): Every unique trace_id is guaranteed to execute exactly once.
-> The Golden Rule: A receipt exists only if the action succeeded. If it did not happen, no receipt or dedupe entry exists.
-> 
+Safety is enforced by instruction ordering, not configuration:
+ * INV-1 (Enum Gating): Only failures explicitly defined in the taxonomy can proceed.
+ * INV-2 (Atomicity): If execution fails, state remains unchanged and no receipt is generated.
+ * INV-3 (Gating): All external effects are restricted to a controlled executor boundary.
+ * INV-4 (Idempotency): Duplicate executions for the same trace_id are physically rejected.
 The Authority Loop
-The remediate function acts as a deterministic judge for automated actions.
-pub async fn remediate(
-    &self, 
-    trace_id: String, 
-    failure_id_raw: String, 
-    executor: &dyn ActionExecutor
-) -> Result<(), VaultError>
+The remediation path is strictly monotonic. If any step fails, the process terminates before mutation:
+ * Validate: Verify failure enum (INV-1).
+ * Check: Read dedupe store (INV-4).
+ * Execute: Attempt external action (Fallible).
+ * Commit: Write dedupe key (Point of no return).
+ * Sign: Generate cryptographic receipt.
+ * Persist: Log the audit record.
+Red-Team Verification
+We prove safety through executable abuse. The following evidence demonstrates the transition from a vulnerable state to a hardened, fail-closed state.
+Evidence: Failure Eliminated (The Receipt of Safety)
+After enforcing correct ordering, the red-team suite confirms the system fails closed. No receipt is created and no dedupe key is written upon execution failure.
+Repository Structure
+A minimal, audited footprint designed for zero-drift instantiation:
+vault-authority/
+├── Cargo.toml      # Dependency locks (tokio, serde, ed25519-dalek)
+├── src/
+│   ├── lib.rs      # API surface
+│   ├── vaultd.rs   # Core authority logic (Sealed)
+│   └── actions.rs  # Execution boundary
+├── tests/
+│   └── redteam.rs  # Adversarial verification
+└── docs/images/    # Proof of safety artifacts
 
-Critical Execution Sequence:
- * Validate: Ensure input matches the enum.
- * Dedupe Read: Block replay attacks before they start.
- * Execute: Attempt the mutation via the ActionExecutor.
- * Dedupe Write: Commit the record only after confirmed success.
- * Sign: Generate a non-repudiable Ed25519 signature.
- * Audit: Persist the final receipt.
-Proof of Safety
-The system relies on red-team tests that simulate hostile input and system failures to prove safety.
-Run the verification suite:
-cargo test redteam -- --nocapture
+Running the Proof
+To verify the design contract and ensure zero false receipts, run:
+cargo test
 
-Verified Vectors:
- * RT-01 (Invalid Enum): Proves that intent smuggling is blocked before state mutation.
- * RT-02 (Duplicate Trace): Proves that retry storms are physically impossible.
- * RT-05 (Exec Failure): Proves that a failed action produces no receipt and no dedupe entry.
-Project Reality
- * Deterministic: Replaces "probably works" with "provably safe".
- * Zero Noise: No server, no complex YAML, and no agentic "black box" behavior.
- * Hardened: Designed specifically for high-frequency API failure modes like Stripe 401s or Twilio 429s.
-Status: v1.0 Sealed. The tests are the contract.
----
-
+Execution Contract:
+ * Success must be provable.
+ * Failure must leave no residue.
+ * History is append-only.
+License
+MIT
