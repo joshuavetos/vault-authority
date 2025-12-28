@@ -1,118 +1,107 @@
 # Vault Authority v1.0 — Deterministic Remediation Gate
 
-Vault Authority is a high-integrity Rust library that enforces **fail-closed, atomic remediation** through instruction ordering, not configuration.  
-It is designed to sit between a diagnostic layer and a production environment and make unsafe actions **physically impossible** to commit.
+Vault Authority is a **fail-closed, deterministic remediation core** written in Rust.  
+It enforces safety **by instruction ordering**, not configuration, policy text, or operator discretion.
 
-This repository contains **only** the audited core and its adversarial test harness.
+This repository contains **only** the audited core and its adversarial test harness.  
+There is no daemon, no HTTP service, and no configuration engine.
 
----
+The guarantee is simple:
 
-## What This Is
-
-- A **library**, not a daemon
-- No HTTP service
-- No YAML engine
-- No runtime configuration
-- No discretionary logic
-
-Vault Authority accepts a `(trace_id, failure_id)` pair and either:
-- Executes safely and emits a signed receipt, or
-- Fails with **no mutation, no receipt, no lie**
-
-The system never claims success unless success actually occurred.
+> **If an action fails, the system cannot lie about it.**
 
 ---
 
-## Core Guarantees
+## What This System Does
 
-- **Actionable**  
-  Accepts `(trace_id, failure_id)` for remediation.
+Vault Authority accepts a `(trace_id, failure_id)` pair and attempts a remediation **exactly once**.
 
-- **Fail-Closed**  
-  A cryptographic receipt is emitted **only after** successful execution.
+A cryptographically signed receipt is emitted **only if**:
+- the failure is explicitly allowed
+- the action executes successfully
+- state mutation occurs in the correct order
 
-- **Atomic**  
-  If execution fails, **no receipt exists and no state is mutated**.
-
-- **Audited**  
-  Correctness is proven via an adversarial red-team test suite.
+If **any step fails**, no receipt exists and no state is mutated.
 
 ---
 
-## Safety Model: Enforced by Ordering
+## Core Properties
 
-Safety is enforced by **instruction sequencing**, not policy.
+- **Fail-Closed** — success is provable; failure leaves no residue  
+- **Atomic** — execution and state mutation are inseparable  
+- **Idempotent** — duplicate `trace_id` values are physically rejected  
+- **Auditable** — correctness is proven via adversarial tests, not claims  
 
-### Invariants
+---
+
+## Enforcement Model (Instruction Ordering)
+
+The remediation path is strictly monotonic.  
+If any step fails, the process terminates immediately.
+
+1. **Validate** — enum gate (`INV-1`)
+2. **Check** — dedupe read (`INV-4`)
+3. **Execute** — external action (fallible)
+4. **Commit** — dedupe write (point of no return)
+5. **Sign** — cryptographic receipt
+6. **Persist** — audit record
+
+Safety is enforced by **where code is allowed to execute**, not by conditionals.
+
+---
+
+## Invariants
 
 - **INV-1 (Enum Gating)**  
-  Only failures explicitly defined in the taxonomy can proceed.
+  Only failures explicitly defined in the taxonomy may proceed.
 
 - **INV-2 (Atomicity)**  
-  If execution fails, state remains unchanged and no receipt is generated.
+  If execution fails, state remains unchanged and no receipt exists.
 
-- **INV-3 (Effect Gating)**  
-  All external effects are restricted to a controlled executor boundary.
+- **INV-3 (Boundary Control)**  
+  All external effects are constrained to a controlled executor interface.
 
-- **INV-4 (Idempotency / Dedupe)**  
-  Duplicate executions for the same `trace_id` are physically rejected.
-
----
-
-## The Authority Loop (Monotonic)
-
-If any step fails, the process terminates **before mutation**.
-
-1. **Validate** — Verify failure enum (INV-1)  
-2. **Check** — Read dedupe store (INV-4)  
-3. **Execute** — Attempt external action (fallible)  
-4. **Commit** — Write dedupe key (point of no return)  
-5. **Sign** — Generate cryptographic receipt  
-6. **Persist** — Write audit record  
+- **INV-4 (Idempotency)**  
+  Duplicate executions for the same `trace_id` are rejected before execution.
 
 ---
 
-## Red-Team Verification
+## Red-Team Verification (RT-05)
 
-Safety is proven by executable abuse.
+The following evidence demonstrates the elimination of a critical failure mode:
+a receipt being generated despite execution failure.
 
-### Evidence: Failure Before Fix (Violation Detected)
+### ❌ Failure Before Fix  
+*A receipt existed even though execution failed — invariant violation.*
 
-This image shows the system **incorrectly generating a receipt after a failed execution**, violating INV-2 (Atomicity).  
-The red-team test `rt_05_no_receipt_on_failure` correctly fails.
+![RT-05 failure before fix](images/rt-05-failure-before-fix.png.PNG)
 
-![RT-05 Failure Before Fix](images/rt-05-failure-before-fix.png)
+### ✅ Pass After Fix  
+*Execution failure produces no receipt and no state mutation.*
 
----
+![RT-05 pass after fix](images/rt-05-pass-after-fix.png.PNG)
 
-### Evidence: Failure Eliminated After Fix (Receipt of Safety)
-
-This image shows the same test **passing after the fix**.  
-Execution failure produces **no receipt and no state mutation**, restoring atomicity.
-
-![RT-05 Pass After Fix](images/rt-05-pass-after-fix.png)
+The test suite proves the invariant **by attempting to break it**.
 
 ---
 
-## What This Repository Is Not
+## Scope (Intentional)
 
-- Not an orchestrator
-- Not a workflow engine
-- Not an AI agent
-- Not a policy framework
-- Not configurable at runtime
+This project is:
+- a **library**
+- a **deterministic core**
+- a **test-proven safety gate**
 
-This is a **mechanical safety core**.
+This project is **not**:
+- a daemon
+- an HTTP service
+- a workflow engine
+- a YAML-driven policy system
 
----
-
-## Status
-
-- Core logic: **Audited**
-- Invariants: **Proven**
-- Red-team suite: **Passing**
-- Surface area: **Intentionally minimal**
-
-Any extension must preserve instruction ordering and fail-closed guarantees.
+Anything above this layer must inherit its constraints.
 
 ---
+
+## License
+
+MIT
