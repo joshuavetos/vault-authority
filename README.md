@@ -45,3 +45,14 @@ Project Reality
  * Zero Noise: No server, no complex YAML, and no agentic "black box" behavior.
  * Hardened: Designed specifically for high-frequency API failure modes like Stripe 401s or Twilio 429s.
 Status: v1.0 Sealed. The tests are the contract.
+---
+
+### Visual Proof
+
+**The Architecture (6-Step Ordering Rule)**
+![Authority Loop](docs/images/sequence_diagram.png)
+
+**The Evidence (Red-Team Success)**
+![Cargo Test Output](docs/images/test_output.png)
+
+---
