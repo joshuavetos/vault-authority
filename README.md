@@ -1,4 +1,4 @@
-*Vault Authority v1.0*
+Vault Authority v1.0
 Deterministic Remediation Gate
 Vault Authority is a high-integrity Rust library designed to sit between a fallible diagnostic layer and production environments. It replaces discretionary "script trust" with architectural ordering invariants, ensuring that automated actions are physically incapable of violating system safety.
 Repository Structure
@@ -45,4 +45,3 @@ Project Reality
  * Zero Noise: No server, no complex YAML, and no agentic "black box" behavior.
  * Hardened: Designed specifically for high-frequency API failure modes like Stripe 401s or Twilio 429s.
 Status: v1.0 Sealed. The tests are the contract.
-
