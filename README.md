@@ -125,6 +125,12 @@ Verification command:
 To confirm a remediation trace, run:  
 `./prb-check.sh "[output_string]" "[expected_hash]"`
 
+Operational Governance & Wiki
+This repository includes a comprehensive documentation suite located in the docs/ directory to ensure high-integrity deployment and auditing:
+• Security Model: Defines the structural invariants (INV-1 through INV-4) and the Ed25519 cryptographic signing process.
+• Operator's Handbook: Instructions for managing rejections, performing manual overrides, and verifying receipts.
+• Taxonomy Governance: The "laws" of the system, including the checklist for adding new remediation playbooks.
+
 -----
 
 ## License
