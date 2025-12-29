@@ -1,26 +1,46 @@
-Vault Authority v1.0 — Deterministic Remediation Core
+Vault Authority v1.0 — Deterministic Remediation Gate
 
-A fail-closed remediation engine that makes it physically impossible to lie about success.
+Stop paying humans to fix the same failures over and over.
 
-Vault Authority is a minimal Rust library that accepts (trace_id, failure_id), validates intent, executes a remediation through a strict boundary, and emits a cryptographically signed receipt only if the action actually succeeds.
-If anything fails, nothing is written. No residue. No ambiguity.
+Vault Authority is a minimal, fail-closed Rust library that makes unsafe autonomous actions physically impossible. It enforces deterministic execution ordering so a system can never claim success unless the action actually completed.
+
+If a receipt exists, the action succeeded.
+If no receipt exists, nothing happened.
+
+No partial success. No lies.
 
 ⸻
 
-What This Is
-   •   A fail-closed remediation core
-   •   Deterministic by instruction ordering, not policy
-   •   Cryptographically auditable
-   •   Proven by adversarial tests
+The Problem
 
-What This Is Not
-   •   Not an agent
-   •   Not an HTTP service or daemon
-   •   Not YAML-driven
-   •   Not an LLM system
-   •   Not a production orchestration platform
+Engineering teams lose time and money to predictable, repetitive failures:
+   •   Auth tokens expire → engineer refreshes → happens again
+   •   Rate limits trigger → config tweaked → happens again
+   •   Zombie DB connections → DBA kills session → happens again
 
-This is the core safety primitive.
+Every one of these creates:
+   •   Tickets that should not exist
+   •   On-call fatigue
+   •   Compliance gaps
+   •   Silent failures with no proof of what actually happened
+
+Traditional automation lies by accident: scripts, playbooks, and agents can fail halfway through and still claim success.
+
+That is unacceptable in production systems.
+
+⸻
+
+The Solution
+
+Vault Authority is a deterministic remediation core that enforces truth by construction.
+
+It:
+	1.	Validates the failure against an explicit, versioned taxonomy
+	2.	Rejects duplicate incidents before execution (idempotency)
+	3.	Executes the remediation through a controlled boundary
+	4.	Only after success generates a cryptographic receipt
+
+If execution fails at any point, the system halts with zero residue.
 
 ⸻
 
@@ -29,109 +49,170 @@ The Core Guarantee
 If a receipt exists, the action completed successfully.
 If no receipt exists, nothing happened.
 
-There is no partial success state.
+This is enforced by instruction ordering, not policy or configuration.
 
 ⸻
 
-Why This Exists
+How It Works (Conceptual)
 
-Automation lies.
+trace_id: "incident-2025-04-20-001"
+failure_id: "ERR_AUTH_EXPIRED"
 
-Most incident automation systems can claim success even when:
-   •   a command partially ran
-   •   a script failed halfway through
-   •   state was mutated inconsistently
-   •   logs are ambiguous or missing
+// Vault Authority pipeline:
+1. Validate failure_id (enum-gated)
+2. Check dedupe store (idempotency)
+3. Execute remediation (fallible)
+4. Commit mutation (point of no return)
+5. Sign receipt (Ed25519)
+6. Persist immutable audit record
 
-That creates operational debt and compliance risk.
-
-Vault Authority eliminates this entire class of failure by making false success structurally impossible.
-
-⸻
-
-How Safety Is Enforced
-
-Vault Authority uses a strictly monotonic execution path:
-
-validate → dedupe read → execute → commit → sign → persist
-
-   •   Validation and dedupe happen before execution
-   •   Execution happens before any state mutation
-   •   Signing and persistence only occur after successful execution
-
-If any step fails, the process halts immediately.
-
-No commit.
-No signature.
-No audit entry.
+Failure at any step aborts the process before mutation or signing.
 
 ⸻
 
 Proven by Adversarial Tests
 
-Safety is not a claim — it is demonstrated.
+Vault Authority ships with red-team tests that intentionally attempt to break invariants.
 
-The repository includes red-team tests that attempt to break invariants:
-   •   RT-01: Malicious / unknown failure ID → rejected before execution
-   •   RT-02: Duplicate incident replay → rejected before execution
-   •   RT-05: Forced execution failure → no receipt, no dedupe entry
+Red-Team Scenarios
+   •   RT-01 — Malicious or unknown failure ID → rejected before execution
+   •   RT-02 — Replay same incident twice → second attempt refused
+   •   RT-05 — Forced execution failure → no receipt generated, no state mutated
 
-These tests prove that the system cannot generate a success artifact unless execution actually succeeded.
+If RT-05 passes, the system is incapable of lying about success.
 
-Evidence (Screenshots)
+📸 Evidence (Screenshots)
 
-The following images are included in the repository and referenced here as proof artifacts:
-   •   docs/images/rt_05_pass.png
-RT-05 passing: execution failure produces zero receipt
-   •   docs/images/redteam_summary.png
-Full red-team test suite passing
+These images are included in the repository under docs/images/:
+
 
 ⸻
 
-Deterministic, Not Clever
+Core Capabilities
 
-Vault Authority does not attempt to “decide” what to do.
-   •   No heuristics
-   •   No probabilistic behavior
-   •   No learning
-   •   No guessing
+✅ Fail-Closed by Design
 
-All allowed actions are explicit.
-All execution is gated.
-All success is provable.
+Execution must succeed to leave any trace. Failure produces nothing.
 
-⸻
+✅ Cryptographically Auditable
 
-Intended Audience
+Every successful remediation generates an Ed25519-signed receipt with timestamp.
 
-This project is for:
-   •   SREs burned by automation that lies
-   •   Infrastructure engineers tired of unprovable fixes
-   •   Security / compliance teams that need hard evidence, not logs
-   •   System designers building higher-level autonomous systems safely
+✅ Idempotent Enforcement
+
+Duplicate remediation attempts for the same incident are rejected before execution.
+
+✅ Deterministic & Testable
+
+Safety is demonstrated by adversarial tests, not claims or documentation.
 
 ⸻
 
-Status
+Use Cases
 
-This is a reference implementation of a deterministic remediation gate.
-   •   Small by design
-   •   Audited
-   •   Red-team verified
-   •   Intended to be studied, forked, and integrated
+Autonomous Token Refresh
 
-Everything else (HTTP layers, orchestration, metrics, workflows) belongs outside this core.
+Detect expired credentials and refresh automatically with proof.
+
+Rate-Limit Auto-Adjustment
+
+Handle predictable traffic spikes without paging humans.
+
+Zombie Process Cleanup
+
+Terminate hung DB connections safely and deterministically.
+
+Compliance-Ready Incident Proof
+
+Produce cryptographic evidence for auditors and postmortems.
+
+⸻
+
+Who This Is For
+   •   SRE / DevOps teams eliminating toil
+   •   Engineering managers reclaiming senior engineer time
+   •   CTOs / VPs reducing MTTR and support costs
+   •   Security & Compliance teams requiring provable remediation
+
+⸻
+
+What This Is (And Isn’t)
+
+✅ This Is
+   •   A deterministic remediation library
+   •   A fail-closed execution gate
+   •   A cryptographically auditable safety core
+   •   Proven by adversarial testing
+
+❌ This Is Not
+   •   An agent framework
+   •   A SaaS product
+   •   A YAML workflow engine
+   •   “Best-effort” automation
+
+⸻
+
+Technical Architecture
+
+Safety is enforced by monotonic instruction ordering:
+	1.	Validate — Explicit failure enum (INV-1)
+	2.	Dedupe Check — Reject replay (INV-4)
+	3.	Execute — Fallible remediation
+	4.	Commit — Point of no return
+	5.	Sign — Cryptographic receipt
+	6.	Persist — Immutable audit record
+
+Core Invariants
+   •   INV-1 — Enum-gated execution
+   •   INV-2 — Atomicity (failure = no mutation)
+   •   INV-3 — Controlled execution boundary
+   •   INV-4 — Idempotency enforced pre-execution
+
+⸻
+
+Getting Started
+
+Requirements
+   •   Rust 1.70+
+   •   Existing monitoring or alerting system
+
+Build
+
+cargo build --release
+
+Verify Safety
+
+cargo test redteam
+
+If RT-05 fails, do not deploy.
+
+⸻
+
+Relationship to PRB v1.1
+
+Vault Authority implements the internal guarantees required by the Partner Reliability Benchmark (PRB) v1.1.
+   •   Vault Authority provides the architecture
+   •   PRB v1.1 provides the external proof
+
+Compliance, executive, and legal artifacts are included in docs/.
 
 ⸻
 
 License
 
-MIT License
-
-Use it freely. Modify it freely.
-If you deploy it wrong, that part is on you.
+MIT License.
+Use freely. Modify freely. Deploy responsibly.
 
 ⸻
 
-Vault Authority
-Because success should be provable, not claimed.
+Final Word
+
+Vault Authority exists for one reason:
+
+Automation that cannot lie.
+
+If your system claims it fixed something, it should be provable — or it should refuse to speak.
+
+⸻
+
+Vault Authority — because partial success is indistinguishable from failure.
