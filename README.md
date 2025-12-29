@@ -97,6 +97,33 @@ vault.remediate(
     &executor
 )?;
 
+## 🏗️ Production Infrastructure
+
+Vault Authority v1.1 is architected for zero-trust cloud environments.
+
+* **Secret Management**: Integrated with Google Secret Manager via Secret Store CSI.
+* **Hot-Reloading**: Cryptographic keys are refreshed in-memory via an asynchronous watcher, eliminating pod restarts during rotation.
+* **Identity**: Bound to GCP IAM via Workload Identity (no static service keys or shared credentials).
+
+### 🛠️ Operational Playbooks
+
+Built-in governance for high-stakes environments:
+
+| Playbook | Purpose | Invariant Protected |
+| :--- | :--- | :--- |
+| `verify_secrets.sh` | Audits CSI mount integrity | INV-3 (Boundary) |
+| `rotate_signing_key.sh` | Rotates Ed25519 material | INV-4 (Bounding) |
+| `remediation_audit.sh` | Cross-checks DB vs Signatures | INV-2 (Atomicity) |
+| `cleanup_old_logs.sh` | Enforces 90-day data retention | INV-4 (Bounding) |
+
+### 🔍 Cryptographic Verification
+
+Every successful remediation produces a hex-encoded Ed25519 signature of the `trace_id`. Verification ensures that the fix was authorized by the current authority key and that the `trace_id` remains tamper-proof in the audit log.
+
+---
+
+**Health Check**: Run `./playbooks/verify_secrets.sh` immediately after deployment to confirm cryptographic readiness.
+
 
 ⸻
 
