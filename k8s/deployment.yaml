@@ -15,8 +15,8 @@ spec:
         app: vault-authority
     spec:
       containers:
-      - name: vault-core
-        image: gcr.io/your-project/vault-authority:v1.1.0
+      - name: vault-authority
+        image: gcr.io/your-project/vault-authority:v1.0.0
         ports:
         - containerPort: 8080
         env:
@@ -26,7 +26,7 @@ spec:
               name: vault-db-secrets
               key: url
         - name: VAULT_KEY_PATH
-          value: "/etc/vault/keys/ed25519.key"
+          value: "/etc/vault/keys/private.key"
         resources:
           limits:
             cpu: "500m"
@@ -35,10 +35,25 @@ spec:
             cpu: "250m"
             memory: "256Mi"
         volumeMounts:
-        - name: vault-keys
+        - name: vault-signing-key-volume
           mountPath: "/etc/vault/keys"
           readOnly: true
       volumes:
-      - name: vault-keys
+      - name: vault-signing-key-volume
         secret:
           secretName: vault-signing-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-authority
+  labels:
+    app: vault-authority
+spec:
+  selector:
+    app: vault-authority
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: ClusterIP
