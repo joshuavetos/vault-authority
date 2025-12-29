@@ -1,119 +1,97 @@
-Vault Authority v1.1 — Stop Fixing The Same Failures Twice
+Vault Authority v1.1 — Autonomous, Fail-Closed Remediation
 
-Autonomous incident remediation with cryptographic proof.
-
-When your infrastructure breaks in predictable ways—auth tokens expire, rate limits trigger, or disks fill—Vault Authority fixes it automatically and generates signed receipts proving it happened correctly.
+Stop fixing the same failures twice.
+Vault Authority detects known infrastructure failures, fixes them automatically, and emits cryptographic proof that the fix actually happened.
 
 No tickets. No 3:00 AM pages. No manual compliance logging.
 
 ⸻
 
-The Problem
+Why Teams Use This
 
-Your team wastes senior engineering time on repetitive infrastructure failures:
+Problem	Traditional Automation	Vault Authority
+Token expiration	Manual refresh every time	Auto-remediated with signed receipt
+Rate limits / spikes	On-call scramble + config edits	One-step adjustment + audit log
+Known DB locks / zombies	DBA intervention	Automated cleanup, zero page alerts
+Compliance proof	Screenshots in Slack threads	Ed25519 receipts and immutable logs
 
-Failure Type	Manual Process	Business Impact
-Auth Token Expiry	Manual refresh & update	$12K+ Annual Labor
-Rate Limit Hit	Config adjust & service restart	Service Downtime
-Resource Pressure	Log rotation & temp purging	Disk/OOM Crashes
-Zombie Processes	Tiered SIGTERM/SIGKILL	Manual SRE Intervention
-
-
-⸻
-
-The Solution
-
-Vault Authority detects known failure patterns and remediates them using a deterministic, fail-closed gate. Success is proven; failure leaves no residue.
-
-// Your monitoring triggers: ERR_DISK_FULL
-// Vault Authority (v1.1 Monotonic Ordering):
-1. Validate — enum gate (INV-1)
-2. Check — dedupe read (INV-4)
-3. Execute — action (INV-3)
-4. Commit — point of no return
-5. Sign — Ed25519 cryptographic receipt
-6. Persist — immutable audit record
-
-Business Impact
-   •   Eliminate toil: 40+ fewer repetitive tickets per month
-   •   MTTR near zero: seconds, not pages
-   •   Audit-ready compliance: tamper-proof receipts
-   •   Operational clarity: no partial success, no lies
+If an action fails: no receipt, no mutation.
+If a receipt exists: the action succeeded.
 
 ⸻
 
-Core Guarantee
+Core Guarantee: Execution Cannot Lie
 
-If a receipt exists, the action completed successfully.
-If no receipt exists, nothing happened.
+validate → check → execute → commit → sign → persist
+(failure at any step aborts immediately with zero state change)
 
-There is no partial success.
-
-⸻
-
-Technical Architecture
-
-Vault Authority enforces safety through instruction ordering, not configuration.
-
-Mandatory Invariants (SysDNA)
-   •   INV-1 (Enum Gating): Only approved failure types execute
-   •   INV-2 (Atomicity): Execution failure = no mutation, no receipt
-   •   INV-3 (Boundary Control): All effects pass through a controlled executor
-   •   INV-4 (Idempotency): Duplicate incidents are rejected before execution
+Invariants
+   •   INV-1 Enum Gating — Only approved failure types execute
+   •   INV-2 Atomicity — No partial mutation, ever
+   •   INV-3 Boundary Control — Controlled executor boundary
+   •   INV-4 Idempotency — Duplicate incidents rejected before execution
 
 ⸻
 
 Red-Team Verification (RT-05)
 
-The adversarial suite attempts to violate atomicity by forcing execution failure.
+These screenshots are taken directly from the adversarial test suite proving the invariant.
 
-Failure Before Fix (Invariant Violation):
+Failure Before Fix — Incorrect Behavior (Bug State)
 
-Pass After Fix (Invariant Restored):
+Execution failed, but a receipt existed. This violated atomicity and was rejected.
 
-Result: Execution failure produces no receipt and no state mutation.
+Pass After Fix — Correct Fail-Closed Behavior
 
-Run locally:
+Execution failure produces no receipt and no state mutation. Invariant restored.
 
+Run locally with:
+cargo test rt_05
+
+⸻
+
+Quickstart
+
+git clone https://github.com/your-org/vault-authority
+cd vault-authority
 cargo test redteam
+cargo build –release
 
+Integrate from your monitoring or alerting system:
 
-⸻
+use vault_authority::{Vault, ShellExecutor};
 
-Verification Extension
+let vault = Vault::new();
+let executor = ShellExecutor;
 
-Certified under Partner Reliability Benchmark (PRB) v1.1:
-   •   Normalization: Norm-v1.1 applied before hashing
-   •   Integrity: Success validated against SHA256 of canonical vectors
-   •   Audit Utility: ./prb-check.sh "<receipt_signature>" "<expected_hash>"
-
-⸻
-
-What This Is (And Isn’t)
-
-This is:
-   •   A deterministic safety core (library)
-   •   A fail-closed remediation gate
-   •   Cryptographically auditable
-   •   Proven via adversarial tests
-
-This is not:
-   •   An agent framework
-   •   An HTTP service or daemon
-   •   A YAML workflow engine
-   •   A “best-effort” automation tool
+vault.remediate(
+“incident-1234”,
+“ERR_AUTH_EXPIRED”,
+&executor
+)?;
 
 ⸻
 
-Getting Started
+What This Is / What This Isn’t
 
-cargo test redteam
-cargo build --release
+This is
+   •   A deterministic remediation gate
+   •   Cryptographically auditable execution
+   •   Fail-closed by construction
+   •   Red-team verified
 
-Integrate as a library from your monitoring/alerting system and expand the approved failure taxonomy deliberately.
+This is not
+   •   A workflow engine
+   •   A YAML sprawl
+   •   Best-effort automation
+   •   An LLM agent
 
 ⸻
 
 License
 
-MIT License. Use freely. Deploy responsibly.
+MIT — use, modify, and deploy freely.
+
+⸻
+
+Vault Authority exists to make repeatable failures boring, provable, and safe.
