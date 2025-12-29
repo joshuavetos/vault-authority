@@ -27,7 +27,7 @@ Your team wastes senior engineering time on repetitive infrastructure failures:
 
 Vault Authority detects known failure patterns via CLI or HTTP Webhook and remediates them using a **Deterministic Gate**:
 
-
+![Vault Authority Monotonic Loop](images/remediation-loop.png)
 
 ```rust
 // Your monitoring triggers: ERR_DISK_FULL
