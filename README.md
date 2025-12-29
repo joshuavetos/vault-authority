@@ -159,7 +159,6 @@ License
 
 MIT — use, modify, and deploy freely.
 
-⸻
 ---
 
 ## Next Steps
