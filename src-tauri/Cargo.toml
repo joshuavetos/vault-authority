@@ -1,0 +1,18 @@
+[package]
+name = "vault-authority-ui"
+version = "1.2.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = "1.5.1"
+
+[dependencies]
+tauri = { version = "1.5.3", features = ["shell-open"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.35", features = ["full"] }
+vault-authority = { path = ".." }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
