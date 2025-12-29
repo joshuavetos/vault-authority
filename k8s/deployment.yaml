@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-authority
+  labels:
+    app: vault-authority
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vault-authority
+  template:
+    metadata:
+      labels:
+        app: vault-authority
+    spec:
+      containers:
+      - name: vault-core
+        image: gcr.io/your-project/vault-authority:v1.1.0
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: vault-db-secrets
+              key: url
+        - name: VAULT_KEY_PATH
+          value: "/etc/vault/keys/ed25519.key"
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+        volumeMounts:
+        - name: vault-keys
+          mountPath: "/etc/vault/keys"
+          readOnly: true
+      volumes:
+      - name: vault-keys
+        secret:
+          secretName: vault-signing-key
