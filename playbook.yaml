@@ -10,4 +10,8 @@ failures:
   ERR_DISK_FULL:
     action: "/app/playbooks/disk_purge.sh"
     undo: "none"
-    description: "Emergency purge of transient /tmp data and log rotation"
+
+  ERR_ZOMBIE_PROCESS:
+    action: "/app/playbooks/zombie_reap.sh"
+    undo: "none"
+    description: "Tiered SIGTERM/SIGKILL escalation for unresponsive services"
