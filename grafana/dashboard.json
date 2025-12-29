@@ -1,0 +1,18 @@
+{
+  "title": "Vault Authority v1.1 - Global Remediation",
+  "panels": [
+    {
+      "title": "Success vs. Rejection Rate",
+      "type": "graph",
+      "targets": [
+        { "expr": "sum(vault_remediations_total{outcome='EXECUTED'})", "legendFormat": "Executed" },
+        { "expr": "sum(vault_remediations_total{outcome='REJECTED'})", "legendFormat": "Rejected" }
+      ]
+    },
+    {
+      "title": "Invariant Breaches (INV-1/4)",
+      "type": "gauge",
+      "targets": [{ "expr": "sum(vault_rejections_total)" }]
+    }
+  ]
+}
