@@ -2,6 +2,12 @@ failures:
   ERR_AUTH_EXPIRED:
     action: "/app/playbooks/token_refresh.sh"
     undo: "revoke_token"
+    
   ERR_RATE_LIMIT:
     action: "/app/playbooks/rate_adjust.sh"
     undo: "rate_limit_revert"
+
+  ERR_DISK_FULL:
+    action: "/app/playbooks/disk_purge.sh"
+    undo: "none"
+    description: "Emergency purge of transient /tmp data and log rotation"
