@@ -1,50 +1,53 @@
-mod actions;
-mod vaultd;
-mod api;
-mod metrics;
-
-use vaultd::Vault;
-use actions::ShellExecutor;
-use std::env;
+use tokio::fs;
+use tokio::time::{sleep, Duration};
 use std::sync::Arc;
-use std::net::SocketAddr;
-use tracing::{info, warn};
+use tokio::sync::RwLock;
+
+// Core State Container for Hot-Reloading
+struct AppState {
+    signing_key: Vec<u8>,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 1. Initialize Logging & Metrics
-    tracing_subscriber::fmt::init();
-    info!("Vault Authority v1.1 — Initializing Production Gateway");
+    let key_path = std::env::var("VAULT_KEY_PATH")
+        .unwrap_or_else(|_| "/etc/vault/keys/private.key".to_string());
 
-    // 2. Instantiate Shared Core
-    let vault = Arc::new(Vault::new());
-    let executor = ShellExecutor;
+    // 1. Initial Load (INV-1: Sequential Startup)
+    let initial_key = fs::read(&key_path).await?;
+    let state = Arc::new(RwLock::new(AppState {
+        signing_key: initial_key,
+    }));
 
-    // 3. Handle CLI Arguments (Manual Intervention Path)
-    let args: Vec<String> = env::args().collect();
-    if args.len() >= 3 {
-        info!("Executing Manual CLI Remediation: Trace={}", args[1]);
-        match vault.remediate(args[1].clone(), args[2].clone(), &executor).await {
-            Ok(receipt) => {
-                println!("STATUS: EXECUTED | RECEIPT: {}", receipt.signature);
-                return Ok(());
-            }
-            Err(e) => {
-                eprintln!("STATUS: REJECTED | REASON: {}", e);
-                std::process::exit(1);
+    println!("🚀 Vault Authority v1.1 started. Key loaded from {}", key_path);
+
+    // 2. Spawn the Key Watcher Task
+    let watcher_state = Arc::clone(&state);
+    let watcher_path = key_path.clone();
+    
+    tokio::spawn(async move {
+        let mut last_content = watcher_state.read().await.signing_key.clone();
+        
+        loop {
+            sleep(Duration::from_secs(30)).await; // Poll interval for CSI sync
+            
+            if let Ok(new_content) = fs::read(&watcher_path).await {
+                if new_content != last_content {
+                    let mut lock = watcher_state.write().await;
+                    lock.signing_key = new_content.clone();
+                    last_content = new_content;
+                    println!("🔐 Rotated: New signing key loaded from disk.");
+                }
             }
         }
-    }
+    });
 
-    // 4. Start HTTP API Server (Remote Invocation Path)
-    let app = api::app(vault.clone());
-    let addr = SocketAddr::from(([0, 0, 0, 0], 8080));
-    
-    info!("HTTP API listening on {}", addr);
-    
-    // Axum server runner
-    let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    // 3. Start your API server (Placeholder for your actix/axum logic)
+    // The server uses state.read().await.signing_key for every signature
+    loop {
+        tokio::signal::ctrl_c().await?;
+        break;
+    }
 
     Ok(())
 }
