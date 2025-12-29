@@ -1,5 +1,7 @@
-pub mod vaultd;
-pub mod actions;
+// Expose modules for use in main.rs and tests/
+pub mod remediation;
 
-pub use vaultd::*;
-pub use actions::*;
+/// Global Application State for Hot-Reloading (INV-2: Atomic)
+pub struct AppState {
+    pub signing_key: Vec<u8>,
+}
