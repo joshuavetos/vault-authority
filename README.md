@@ -1,77 +1,72 @@
-# Vault Authority v1.1 — Stop Fixing The Same Failures Twice
+Vault Authority v1.0 — Deterministic Remediation Gate
 
-**Autonomous incident remediation with cryptographic proof.**
+Fail-closed remediation core for infrastructure automation.
 
-When your infrastructure breaks in predictable ways—auth tokens expire, rate limits trigger, or disks fill—Vault Authority fixes it automatically and generates signed receipts proving it happened correctly.
+Vault Authority is a minimal Rust library that prevents “automation that lies” by enforcing a strictly monotonic execution order: a success receipt cannot exist unless the action actually succeeded. If anything fails, nothing is committed and no receipt is produced.
 
-No tickets. No 3:00 AM pages. No manual compliance logging.
+What it does
+   •   Accepts (trace_id, failure_id)
+   •   Validates failure_id against an explicit taxonomy (enum-gated)
+   •   Rejects duplicates before execution (idempotency)
+   •   Executes via a controlled, mockable executor boundary
+   •   Commits state only after successful execution
+   •   Signs and persists a receipt only after commit
 
-[Technical Architecture](#technical-architecture) | [Red-Team Verification](#red-team-verification-rt-05) | [Operational Governance](#operational-governance--wiki)
+What it is NOT
+   •   Not an agent framework
+   •   Not an HTTP service / daemon
+   •   Not a YAML workflow engine
+   •   Not an LLM system
+   •   Not “best effort” automation
 
----
+The core guarantee
 
-## **The Problem**
+If a receipt exists → the action completed successfully (verifiable).
+If no receipt exists → nothing happened.
 
-Your team wastes senior engineering time on repetitive infrastructure failures:
+No partial success.
 
-| Failure Type | Manual Process | Business Impact |
-|--------------|----------------|-----------------|
-| **Auth Token Expiry** | Manual refresh & update | $12K+ Annual Labor |
-| **Rate Limit Hit** | Config adjust & service restart | Service Downtime |
-| **Resource Pressure** | Log rotation & temp purging | Disk/OOM Crashes |
-| **Zombie Processes** | Tiered SIGTERM/SIGKILL | Manual SRE Intervention |
+Ordering (enforced, not promised)
 
----
+validate → dedupe_read → execute → commit → sign → persist
+Failure at any step aborts before mutation.
 
-## **The Solution**
+Evidence: RT-05 (no receipt on failure)
 
-Vault Authority detects known failure patterns via CLI or HTTP Webhook and remediates them using a **Deterministic Gate**:
+These screenshots are in the repo under images/ and should render in GitHub README:
 
-![Vault Authority Monotonic Loop](images/remediation-loop.png)
+Failure before fix (invariant violated)
 
-```rust
-// Your monitoring triggers: ERR_DISK_FULL
-// Vault Authority (v1.1 Monotonic Ordering):
-1. Validate — enum gate (INV-1)
-2. Check — dedupe read (INV-4)
-3. Execute — action: disk_purge.sh (INV-3)
-4. Commit — dedupe write (Point of no return)
-5. Sign — Ed25519 cryptographic receipt
-6. Persist — audit record + Prometheus metric
+Pass after fix (fail-closed restored)
 
-Business Impact
- * Eliminate Toil: 40+ fewer repetitive tickets per month.
- * MTTR Near Zero: Resolve outages in seconds, not 45-minute response windows.
- * Audit-Ready Compliance: Tamper-proof Ed25519 receipts for SOC2/ISO 27001.
- * Operational Visibility: Real-time Grafana dashboards tracking every autonomous fix.
-v1.1 Operational Features
-✅ Remote Invocation (HTTP API)
-Supports direct integration with Prometheus Alertmanager, Datadog, or custom webhooks.
-✅ Real-Time Observability
-Native Prometheus metrics export (vault_remediations_total) for instant visibility into system health.
-Technical Architecture
-Vault Authority enforces safety through instruction ordering, not configuration.
-The 4 Mandatory Invariants (SysDNA)
- * INV-1 (Enum Gating): Only failures in the authorized taxonomy are permitted.
- * INV-2 (Atomicity): State changes and receipts are only generated AFTER successful execution.
- * INV-3 (Boundary Control): Execution is isolated to the ActionExecutor interface.
- * INV-4 (Idempotency): A persistent registry prevents re-execution of the same trace_id.
-Red-Team Verification (RT-05)
-The adversarial suite proves the invariant by attempting to break it.
-❌ Failure Before Fix
-A receipt existed even though execution failed — invariant violation.
-✅ Pass After Fix
-Execution failure produces no receipt and no state mutation.
-Verification Extension: PRB v1.1
-Certified under Partner Reliability Benchmark v1.1.
- * Normalization: All outputs standardized using Norm-v1.1.
- * Integrity: Success validated against SHA256 hashes of canonical test vectors.
- * Audit Utility:
-   ./prb-check.sh "[receipt_signature]" "[expected_hash]"
-Operational Governance & Wiki
- * Security Model: Deep dive into Ed25519 signing and invariant bounds.
- * Operator's Handbook: Manual overrides and triage for rejected traces.
- * Taxonomy Governance: How to add new failure modes safely.
+Quick start
+
+Build:
+
+cargo build
+
+Run adversarial suite:
+
+cargo test redteam
+
+If RT-05 fails, execution failures can produce false success receipts. Do not use until fixed.
+
+Repository layout
+   •   src/ — library core
+   •   tests/redteam.rs — adversarial verification harness
+   •   images/ — proof screenshots for RT-05
+
+Audience
+
+For SREs / infra engineers who have been burned by unprovable automation:
+“Action attempted” ≠ “action completed.”
+
+Vault Authority exists to make that distinction mechanically enforceable.
+
+Status
+
+Reference implementation. Study it. Fork it. Break it.
+
 License
-MIT
 
+MIT License.
