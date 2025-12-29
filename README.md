@@ -196,6 +196,19 @@ In a post-incident recovery scenario, you do not need "magic" installers; you ne
 * ❌ Install background daemons or register system services.
 * ❌ Auto-upgrade any dependencies.
 
+## 🛡️ AI Governance: The Constrainer Lite
+
+Vault Authority v1.2+ includes an integrated AI firewall to prevent "Hallucinated Logic" from reaching production. Every AI-generated suggestion is intercepted and audited against your organization's safety policies before it is displayed.
+
+### Key Features
+* **Fail-Closed Execution**: If the LLM generates a forbidden command (e.g., `--force`), the `constrainer.py` script terminates the process and blocks the output.
+* **Deterministic Audit**: Uses a YAML-based regex engine to enforce policy, ensuring consistent results that are immune to prompt injection.
+* **Postmortem Evidence**: All blocked attempts are retained in the audit log, providing a "Workflow Memory" of blocked risks.
+
+### Quick Start
+```bash
+# Audit an AI suggestion against local constraints
+./scripts/constrainer.py "How do I fix the disk space?" $ANTHROPIC_API_KEY
 
 ⸻
 
