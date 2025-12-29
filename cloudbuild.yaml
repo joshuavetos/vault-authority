@@ -1,0 +1,22 @@
+steps:
+  # 1. Run Unit and Integration Tests
+  - name: 'rust:1.75'
+    args: ['cargo', 'test']
+
+  # 2. Run Adversarial Red-Team Suite (Mandatory)
+  - name: 'rust:1.75'
+    args: ['cargo', 'test', '--test', 'redteam']
+
+  # 3. Build Production Binary
+  - name: 'rust:1.75'
+    args: ['cargo', 'build', '--release']
+
+  # 4. Build and Push Docker Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/vault-authority:$REVISION_ID', '.']
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/vault-authority:$REVISION_ID']
+
+images:
+  - 'gcr.io/$PROJECT_ID/vault-authority:$REVISION_ID'
