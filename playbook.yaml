@@ -1,17 +1,48 @@
+# Vault Authority v1.0 — Comprehensive Failure Taxonomy
+# This file governs all authorized autonomous remediation actions.
+
 failures:
+  # --- Authentication & Traffic ---
   ERR_AUTH_EXPIRED:
     action: "/app/playbooks/token_refresh.sh"
     undo: "revoke_token"
-    
+    description: "Automated renewal of infrastructure OAuth2 tokens"
+
   ERR_RATE_LIMIT:
     action: "/app/playbooks/rate_adjust.sh"
     undo: "rate_limit_revert"
+    description: "Dynamic capacity increment for API Gateway"
 
+  # --- Resource & Process Recovery ---
   ERR_DISK_FULL:
     action: "/app/playbooks/disk_purge.sh"
     undo: "none"
+    description: "Emergency purge of transient /tmp data and log rotation"
 
   ERR_ZOMBIE_PROCESS:
     action: "/app/playbooks/zombie_reap.sh"
     undo: "none"
     description: "Tiered SIGTERM/SIGKILL escalation for unresponsive services"
+
+  # --- Database & Network Integrity ---
+  ERR_DB_CON_LEAK:
+    action: "/app/playbooks/db_session_kill.sh"
+    undo: "none"
+    description: "Termination of idle-in-transaction SQL sessions"
+
+  ERR_NET_UNREACHABLE:
+    action: "/app/playbooks/net_reset.sh"
+    undo: "none"
+    description: "Local DNS flush and routing table refresh"
+
+  # --- Memory Management ---
+  ERR_MEM_PRESSURE:
+    action: "/app/playbooks/worker_recycle.sh"
+    undo: "none"
+    description: "Graceful worker handoff to relieve RAM exhaustion"
+
+# Global Enforcement Policy
+policy:
+  enforce_idempotency: true   # INV-4 Required
+  sign_receipts: true        # PRB v1.1 Requirement
+  bitwise_verification: true # PRB v1.1 Requirement
