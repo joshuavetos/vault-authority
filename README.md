@@ -2,7 +2,7 @@ Vault Authority v1.0 — Deterministic Remediation Gate
 Vault Authority is a fail-closed, deterministic remediation core written in Rust. It enforces safety by instruction ordering, not configuration, policy text, or operator discretion.
 This repository is certified under the Partner Reliability Benchmark (PRB) v1.1.
 What This System Does
-Vault Authority accepts a (trace_id, failure_id) pair and attempts a remediation exactly once. A cryptographically signed receipt is emitted only if the failure is allowed, the action executes successfully, and state mutation occurs in the correct order.
+Vault Authority accepts a (trace_id, failure_id) pair and attempts a remediation exactly once. A cryptographically signed receipt is emitted only if the failure is explicitly allowed, the action executes successfully, and state mutation occurs in the correct order.
 If any step fails, no receipt exists and no state is mutated.
 Core Properties
  * Fail-Closed — Success is provable; failure leaves no residue.
@@ -28,11 +28,12 @@ Documentation & Compliance
  * Legal/Compliance Appendix: Control mapping for SOC2 and ISO 27001.
  * Certification Policy: Rules for 30-day version pinning.
 Red-Team Verification (RT-05)
-The test suite proves the invariant by attempting to break it.
+The following evidence demonstrates the elimination of a critical failure mode: a receipt being generated despite execution failure.
 ❌ Failure Before Fix
 A receipt existed even though execution failed — invariant violation.
 ✅ Pass After Fix
 Execution failure produces no receipt and no state mutation.
+The test suite proves the invariant by attempting to break it.
 Run Verification
 Rust Suite:
 cargo test
