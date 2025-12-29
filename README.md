@@ -1,19 +1,33 @@
-Vault Authority v1.1 — Stop Fixing The Same Failures Twice
-Autonomous incident remediation with cryptographic proof.
+# Vault Authority v1.1 — Stop Fixing The Same Failures Twice
+
+**Autonomous incident remediation with cryptographic proof.**
+
 When your infrastructure breaks in predictable ways—auth tokens expire, rate limits trigger, or disks fill—Vault Authority fixes it automatically and generates signed receipts proving it happened correctly.
+
 No tickets. No 3:00 AM pages. No manual compliance logging.
-Technical Architecture | Red-Team Verification | Operational Governance
-The Problem
+
+[Technical Architecture](#technical-architecture) | [Red-Team Verification](#red-team-verification-rt-05) | [Operational Governance](#operational-governance--wiki)
+
+---
+
+## **The Problem**
+
 Your team wastes senior engineering time on repetitive infrastructure failures:
+
 | Failure Type | Manual Process | Business Impact |
-|---|---|---|
-| Auth Token Expiry | Manual refresh & update | $12K+ Annual Labor |
-| Rate Limit Hit | Config adjust & service restart | Service Downtime |
-| Resource Pressure | Log rotation & temp purging | Disk/OOM Crashes |
-| Zombie Processes | Tiered SIGTERM/SIGKILL | Manual SRE Intervention |
-What if these just... fixed themselves?
-The Solution
-Vault Authority detects known failure patterns via CLI or HTTP Webhook and remediates them using a Deterministic Gate:
+|--------------|----------------|-----------------|
+| **Auth Token Expiry** | Manual refresh & update | $12K+ Annual Labor |
+| **Rate Limit Hit** | Config adjust & service restart | Service Downtime |
+| **Resource Pressure** | Log rotation & temp purging | Disk/OOM Crashes |
+| **Zombie Processes** | Tiered SIGTERM/SIGKILL | Manual SRE Intervention |
+
+---
+
+## **The Solution**
+
+Vault Authority detects known failure patterns via CLI or HTTP Webhook and remediates them using a **Deterministic Gate**:
+
+```rust
 // Your monitoring triggers: ERR_DISK_FULL
 // Vault Authority (v1.1 Monotonic Ordering):
 1. Validate — enum gate (INV-1)
@@ -22,8 +36,6 @@ Vault Authority detects known failure patterns via CLI or HTTP Webhook and remed
 4. Commit — dedupe write (Point of no return)
 5. Sign — Ed25519 cryptographic receipt
 6. Persist — audit record + Prometheus metric
-
-// Result: Resolved in <3 seconds. Total human involvement: Zero.
 
 Business Impact
  * Eliminate Toil: 40+ fewer repetitive tickets per month.
@@ -35,20 +47,6 @@ v1.1 Operational Features
 Supports direct integration with Prometheus Alertmanager, Datadog, or custom webhooks.
 ✅ Real-Time Observability
 Native Prometheus metrics export (vault_remediations_total) for instant visibility into system health.
-✅ Fail-Closed Safety
-If a remediation script fails, no receipt is generated. The system cannot lie about success.
-✅ Idempotent By Design
-The INV-4 Registry ensures that duplicate alerts for the same incident ID are physically rejected.
-Quick Start
-# 1. Generate identity and set permissions
-./setup.sh 
-
-# 2. Verify invariants via adversarial test suite
-cargo test redteam  
-
-# 3. Launch the v1.1 Gateway
-cargo run --release -- --server
-
 Technical Architecture
 Vault Authority enforces safety through instruction ordering, not configuration.
 The 4 Mandatory Invariants (SysDNA)
@@ -57,7 +55,6 @@ The 4 Mandatory Invariants (SysDNA)
  * INV-3 (Boundary Control): Execution is isolated to the ActionExecutor interface.
  * INV-4 (Idempotency): A persistent registry prevents re-execution of the same trace_id.
 Red-Team Verification (RT-05)
-The adversarial suite proves the invariant by attempting to break it.
 ❌ Failure Before Fix
 A receipt existed even though execution failed — invariant violation.
 ✅ Pass After Fix
@@ -72,17 +69,6 @@ Operational Governance & Wiki
  * Security Model: Deep dive into Ed25519 signing and invariant bounds.
  * Operator's Handbook: Manual overrides and triage for rejected traces.
  * Taxonomy Governance: How to add new failure modes safely.
-v1.1 Taxonomy (Authorized Actions)
-| Failure ID | Remediation Action |
-|---|---|
-| ERR_AUTH_EXPIRED | OAuth2 Token Rotation |
-| ERR_RATE_LIMIT | Dynamic Gateway Adjustment |
-| ERR_DISK_FULL | Bounded Disk/Log Purge |
-| ERR_ZOMBIE_PROCESS | Tiered Service Recovery |
-| ERR_DB_CON_LEAK | SQL Session Termination |
-Roadmap
- * v1.1 (Current): HTTP API + Prometheus Metrics + Grafana Dashboard
- * v2.0 (Planned): Multi-step workflows & Machine Learning failure prediction.
 License
 MIT
 
