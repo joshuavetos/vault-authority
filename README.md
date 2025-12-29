@@ -47,14 +47,19 @@ v1.1 Operational Features
 Supports direct integration with Prometheus Alertmanager, Datadog, or custom webhooks.
 ✅ Real-Time Observability
 Native Prometheus metrics export (vault_remediations_total) for instant visibility into system health.
+✅ Fail-Closed Safety
+If a remediation script fails, no receipt is generated. The system cannot lie about success.
+✅ Idempotent By Design
+The INV-4 Registry ensures that duplicate alerts for the same incident ID are physically rejected.
 Technical Architecture
 Vault Authority enforces safety through instruction ordering, not configuration.
 The 4 Mandatory Invariants (SysDNA)
- * INV-1 (Enum Gating): Only failures in the authorized taxonomy (see playbook.yaml) are permitted.
+ * INV-1 (Enum Gating): Only failures in the authorized taxonomy are permitted.
  * INV-2 (Atomicity): State changes and receipts are only generated AFTER successful execution.
  * INV-3 (Boundary Control): Execution is isolated to the ActionExecutor interface.
  * INV-4 (Idempotency): A persistent registry prevents re-execution of the same trace_id.
 Red-Team Verification (RT-05)
+The adversarial suite proves the invariant by attempting to break it.
 ❌ Failure Before Fix
 A receipt existed even though execution failed — invariant violation.
 ✅ Pass After Fix
