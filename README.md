@@ -8,6 +8,11 @@
 <p align="center">Cold, mechanical legitimacy.</p>
 
 
+<p align="center">
+  <code>cargo install vault-authority</code> • 
+  <a href="#quickstart">Quick Start</a> • 
+  <a href="#red-team-verification-rt-05">Proof</a>
+</p>
 
 ⸻
 
@@ -127,6 +132,13 @@ Every successful remediation produces a hex-encoded Ed25519 signature of the `tr
 
 ⸻
 
+## Who This Is For
+
+**DevOps/SRE Teams** — Eliminate toil, reclaim sleep  
+**Engineering Managers** — Cut 20-40 hrs/month of senior time  
+**Compliance Teams** — Cryptographic audit trails for SOC 2 / ISO 27001  
+
+
 What This Is / What This Isn’t
 
 This is
@@ -148,5 +160,13 @@ License
 MIT — use, modify, and deploy freely.
 
 ⸻
+---
+
+## Next Steps
+
+**Try it:** Clone, test, integrate  
+**Report issues:** [GitHub Issues](https://github.com/joshuavetos/vault-authority/issues)  
+**Commercial support:** jsvetos90@gmail.com
 
 Vault Authority exists to make repeatable failures boring, provable, and safe.
+
