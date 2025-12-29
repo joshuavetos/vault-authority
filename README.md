@@ -100,6 +100,16 @@ This project is **not**:
 
 Anything above this layer must inherit its constraints.
 
+Verification Extension: PRB v1.1
+This repository has been extended to comply with the Partner Reliability Benchmark (PRB) v1.1. While the core library remains a deterministic safety gate, this extension provides the bitwise proof required for external audits.
+ * Normalization Standard: All outputs are verified using Norm-v1.1 (Trim, LF-normalization, space-collapse).
+ * Bitwise Integrity: Success is validated against SHA256 hashes of the canonical test vectors.
+ * Compliance Artifacts: Supplementary documentation for CISO review, Legal mapping, and Certification Policy is located in the docs/ directory.
+Verification Harness:
+Run the following to verify the output of a specific remediation trace:
+./prb-check.sh "[output_string]" "[expected_hash]"
+
+
 ---
 
 ## License
