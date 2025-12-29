@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/va-logo.PNG" alt="Vault Authority Logo" width="420">
+  <img src="images/va-logo2.PNG" alt="Vault Authority Logo" width="420">
 </p>
 
 
