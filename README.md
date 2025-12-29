@@ -1,6 +1,8 @@
-Ok here’s the current readme
-
 # Vault Authority v1.0 — Deterministic Remediation Gate
+
+Stop wasting time and money fixing the same damn problems.
+Vault Authority is an automated repair system built in Rust. When your infrastructure keeps breaking in the same ways, it catches the pattern, fixes the issue by itself, and provides a cryptographic receipt proving it did the job correctly—no manual babysitting, no guesswork.
+The project meets the Partner Reliability Benchmark (PRB) v1.1 standards for verified system dependability.
 
 Vault Authority is a **fail-closed, deterministic remediation core** written in Rust.  
 It enforces safety **by instruction ordering**, not configuration, policy text, or operator discretion.
@@ -113,6 +115,15 @@ This repository has been extended to comply with the Partner Reliability Benchma
   Verification Harness:
   Run the following to verify the output of a specific remediation trace:
   ./prb-check.sh “[output_string]” “[expected_hash]”
+
+Verification Extension: PRB v1.1
+This update brings the repository into full compliance with the Partner Reliability Benchmark (PRB) v1.1. The core library still acts as a deterministic safety gate—it never makes random choices—but this extension adds the low‑level, bit‑for‑bit proof needed for external audits.
+•	Output Normalization: Every output is cleaned and standardized using Norm‑v1.1, which trims whitespace, normalizes line endings, and collapses extra spaces.
+•	Integrity Checks: Each successful run is verified against known SHA‑256 hash values to confirm it matched the trusted reference exactly.
+•	Audit Materials: Documentation for security officers, legal teams, and certification reviewers is available in the `docs/` folder.
+Verification command:  
+To confirm a remediation trace, run:  
+`./prb-check.sh "[output_string]" "[expected_hash]"`
 
 -----
 
