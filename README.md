@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="images/va-logo.PNG" alt="Vault Authority Logo" width="400">
+</p>
 Vault Authority v1.1 — Autonomous, Fail-Closed Remediation
 
 Stop fixing the same failures twice.
