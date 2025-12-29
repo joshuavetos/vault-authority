@@ -176,6 +176,23 @@ To compile the dashboard for your local OS:
 npm install
 npm run tauri build
 
+### 🛡️ Zero-Trust Bootstrap Verification
+
+In a post-incident recovery scenario, you do not need "magic" installers; you need predictability. The `setup.sh` script is a strictly scoped ceremony that verifies the integrity of your environment before the first remediation is authorized.
+
+**What this script does:**
+* **Verify**: Ensures Rust 1.75+, Node 20+, and PostgreSQL connectivity are present.
+* **Lock**: Enforces a `bitwise` check on pinned dependencies; aborts on any lockfile drift.
+* **Audit**: Validates that the Ed25519 signing key is readable but not writable by the engine.
+* **Prove**: Executes the **RT-05 Adversarial Suite** to confirm the engine correctly refuses unsigned or out-of-order requests.
+
+**What it explicitly DOES NOT do:**
+* ❌ Open network ports or modify system firewalls.
+* ❌ Create, rotate, or transmit private key material.
+* ❌ Install background daemons or register system services.
+* ❌ Auto-upgrade any dependencies.
+
+
 ⸻
 
 License
