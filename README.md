@@ -153,6 +153,29 @@ This is not
    •   “Best effort” automation
    •   An LLM agent
 
+
+## 🖥️ Desktop Control Panel (v1.2)
+
+Vault Authority now includes a cross-platform desktop dashboard built with **Tauri + Rust**. This interface acts as a high-fidelity window into the engine's internal state without compromising the **Fail-Closed** mandate.
+
+### 🔍 Read-Only Truth
+The dashboard is physically constrained by the **One-Way Observer Pattern**:
+* **Passive Monitoring**: The UI subscribes to the engine's broadcast stream but lacks IPC handlers to trigger remediations or modify keys.
+* **Lossy by Design**: The UI uses a fixed 50-event buffer. If the dashboard stalls, the engine drops UI events rather than blocking the remediation hot-path.
+* **Hardened Build**: Pinned dependencies and restricted Tauri permissions prevent supply-chain drift and UI-level privilege escalation.
+
+### 🛠️ Visualizing Invariants
+- **Real-Time Audit**: Watch Ed25519 receipts appear the millisecond they are committed to the DB.
+- **Invariant Health**: Immediate visual confirmation of INV-1 through INV-4 status.
+- **Chronological Truth**: A monospace log of every execution attempt, refusal, and signature.
+
+
+### 🏗️ Build & Launch
+To compile the dashboard for your local OS:
+```bash
+npm install
+npm run tauri build
+
 ⸻
 
 License
