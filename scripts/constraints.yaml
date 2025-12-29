@@ -1,0 +1,10 @@
+# SRE Incident Safety Constraints
+constraints:
+  - regex: "(--force|--no-preserve-root|rm -rf /)"
+    message: "VIOLATION: Destructive command detected. INV-3 Boundary enforced."
+  - regex: "(password|secret|key|token|auth_|Bearer)"
+    message: "VIOLATION: Credential exposure risk. INV-3 Data Boundary enforced."
+  - regex: "(diagnos|prescri|treat|symptom|cure|medical)"
+    message: "VIOLATION: Non-authorized domain (Medical). INV-1 Gating enforced."
+  - regex: "(sudo |chmod 777|chown)"
+    message: "VIOLATION: Unauthorized privilege escalation attempt."
