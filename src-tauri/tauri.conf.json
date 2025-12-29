@@ -1,0 +1,38 @@
+{
+  "build": {
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "Vault Authority",
+    "version": "1.2.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "event": {
+        "listen": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "category": "DeveloperTool",
+      "identifier": "com.vault-authority.app",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png"
+      ]
+    },
+    "windows": [
+      {
+        "title": "Vault Authority Control Panel",
+        "width": 1024,
+        "height": 768,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ]
+  }
+}
