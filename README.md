@@ -27,6 +27,8 @@ Your team wastes senior engineering time on repetitive infrastructure failures:
 
 Vault Authority detects known failure patterns via CLI or HTTP Webhook and remediates them using a **Deterministic Gate**:
 
+
+
 ```rust
 // Your monitoring triggers: ERR_DISK_FULL
 // Vault Authority (v1.1 Monotonic Ordering):
@@ -47,10 +49,6 @@ v1.1 Operational Features
 Supports direct integration with Prometheus Alertmanager, Datadog, or custom webhooks.
 ✅ Real-Time Observability
 Native Prometheus metrics export (vault_remediations_total) for instant visibility into system health.
-✅ Fail-Closed Safety
-If a remediation script fails, no receipt is generated. The system cannot lie about success.
-✅ Idempotent By Design
-The INV-4 Registry ensures that duplicate alerts for the same incident ID are physically rejected.
 Technical Architecture
 Vault Authority enforces safety through instruction ordering, not configuration.
 The 4 Mandatory Invariants (SysDNA)
