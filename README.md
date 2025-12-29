@@ -178,6 +178,10 @@ npm run tauri build
 
 ### 🛡️ Zero-Trust Bootstrap Verification
 
+<p align="center">
+  <img src="images/Vass.PNG" width="700">
+</p>
+
 In a post-incident recovery scenario, you do not need "magic" installers; you need predictability. The `setup.sh` script is a strictly scoped ceremony that verifies the integrity of your environment before the first remediation is authorized.
 
 **What this script does:**
